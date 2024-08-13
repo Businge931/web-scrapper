@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -86,6 +87,40 @@ func extractFacebookURL(urls []string) (string, error) {
 	return "", fmt.Errorf("no Facebook URL found")
 }
 
+func getEmailFromFacebook(facebookURL string) (string, error) {
+	aboutURL := facebookURL
+	if !strings.HasSuffix(facebookURL, "/") {
+		aboutURL += "/"
+	}
+	aboutURL += "about"
+
+	resp, err := http.Get(aboutURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch Facebook About page: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("non-200 status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read Facebook About page: %w", err)
+	}
+
+	htmlContent := string(body)
+
+	emailRegex := regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
+	email := emailRegex.FindString(htmlContent)
+
+	if email == "" {
+		return "", fmt.Errorf("no email address found")
+	}
+
+	return email, nil
+}
+
 func main() {
 	companyNames, err := readCompanyNames("companies.txt")
 	if err != nil {
@@ -112,9 +147,14 @@ func main() {
 		if err != nil {
 			fmt.Println("Error extracting Facebook URL for", companyName, ":", err)
 			continue
-		} else {
-			fmt.Println("Facebook URL found:", facebookURL)
 		}
+
+		email, err := getEmailFromFacebook(facebookURL)
+		if err != nil {
+			fmt.Println("Error getting email from Facebook for", companyName, ":", err)
+			continue
+		}
+		fmt.Println("Email found:", email)
 	}
 
 }
