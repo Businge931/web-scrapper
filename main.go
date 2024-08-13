@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -30,7 +31,7 @@ func searchGoogle(companyName string) ([]string, error) {
 	baseURL := "https://www.google.com/search"
 	query := url.Values{}
 	query.Add("q", companyName)
-	query.Add("num", "20") // Number of results to return (max 10)
+	query.Add("num", "10") // Number of results to return (max 10)
 
 	searchUrl := fmt.Sprintf("%s?%s", baseURL, query.Encode())
 
@@ -39,7 +40,6 @@ func searchGoogle(companyName string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to search Google: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	// Check for non-200 status codes
@@ -57,12 +57,20 @@ func searchGoogle(companyName string) ([]string, error) {
 	var urls []string
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		link, exists := s.Attr("href")
-		if exists && strings.HasPrefix(link, "url?q=") {
-			// Trim the "/url?q=" prefix and everything after the first "&"
-			url:=strings.Split(link[7:],"&")[0]
-			urls=append(urls, url)
+
+		if exists && strings.Contains(link, "/url?q=") {
+			// fmt.Println("url",link)
+			// Extract the actual URL by trimming the "/url?q=" prefix and stopping at the first "&"
+			start := strings.Index(link, "/url?q=") + len("/url?q=")
+			end := strings.Index(link[start:], "&")
+			if end != -1 {
+				urls = append(urls, link[start:start+end])
+			} else {
+				urls = append(urls, link[start:])
+			}
 		}
 	})
+
 
 	return urls, nil
 }
@@ -73,5 +81,20 @@ func main() {
 		fmt.Println("Error reading company names:", err)
 		return
 	}
-	fmt.Println(companyNames)
+
+	for _, companyName := range companyNames {
+		// Simulate delays to prevent getting blocked by Google
+		time.Sleep(2 * time.Second)
+
+		urls, err := searchGoogle(companyName)
+		if err != nil {
+			fmt.Println("Error searching Google for", companyName, ":", err)
+			continue
+		}
+
+		for _, url := range urls {
+		fmt.Println(url)
+	}
+	}
+
 }
