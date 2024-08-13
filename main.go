@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -71,8 +72,18 @@ func searchGoogle(companyName string) ([]string, error) {
 		}
 	})
 
-
 	return urls, nil
+}
+
+func extractFacebookURL(urls []string) (string, error) {
+	facebookRegex := regexp.MustCompile(`https?://(www\.)?facebook\.com/[^\s]*`)
+
+	for _, url := range urls {
+		if facebookRegex.MatchString(url) {
+			return facebookRegex.FindString(url), nil
+		}
+	}
+	return "", fmt.Errorf("no Facebook URL found")
 }
 
 func main() {
@@ -92,9 +103,18 @@ func main() {
 			continue
 		}
 
-		for _, url := range urls {
-		fmt.Println(url)
-	}
+		// for _, url := range urls {
+		// 	fmt.Println(url)
+
+		// }
+
+		facebookURL, err := extractFacebookURL(urls)
+		if err != nil {
+			fmt.Println("Error extracting Facebook URL for", companyName, ":", err)
+			continue
+		} else {
+			fmt.Println("Facebook URL found:", facebookURL)
+		}
 	}
 
 }
