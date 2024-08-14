@@ -10,15 +10,24 @@ import (
 )
 
 func SearchGoogle(companyName string) (string, error) {
-	baseURL := "https://www.google.com"
+	baseURL := "https://www.google.com/search"
 	query := url.Values{}
 	query.Add("q", companyName)
-	// query.Add("num", "10") // Number of results to return (max 10)
 
 	searchUrl := fmt.Sprintf("%s?%s", baseURL, query.Encode())
 
+	// Create a new request
+	req, err := http.NewRequest("GET", searchUrl, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set the User-Agent header
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
 	// Make the HTTP request
-	resp, err := http.Get(searchUrl)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to search Google: %w", err)
 	}
@@ -40,6 +49,9 @@ func SearchGoogle(companyName string) (string, error) {
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		link, exists := s.Attr("href")
 		if exists && strings.Contains(link, "/url?q=") {
+
+			fmt.Println("link:", link)
+
 			start := strings.Index(link, "/url?q=") + len("/url?q=")
 			end := strings.Index(link[start:], "&")
 			if end != -1 {
@@ -48,9 +60,8 @@ func SearchGoogle(companyName string) (string, error) {
 				homepageURL = link[start:]
 			}
 
-			if strings.Contains(homepageURL, "facebook.com") || strings.Contains(homepageURL, "linkedin.com") {
-				homepageURL = ""
-			} else {
+			// Filter out social media links
+			if !strings.Contains(homepageURL, "facebook.com") && !strings.Contains(homepageURL, "linkedin.com") {
 				return
 			}
 		}
@@ -59,6 +70,5 @@ func SearchGoogle(companyName string) (string, error) {
 	if homepageURL == "" {
 		return "", fmt.Errorf("no homepage URL found")
 	}
-	fmt.Println("url:", homepageURL)
 	return homepageURL, nil
 }

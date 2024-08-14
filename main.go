@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"webscrapper/companies"
 	"webscrapper/web"
@@ -14,37 +13,47 @@ func getCompanyEmail(companyName string) (string, error) {
 		return "", fmt.Errorf("error searching Google: %w", err)
 	}
 
-	aboutPageURL, err := web.InferAboutPage(homepageURL)
-	if err != nil {
-		return "", fmt.Errorf("error inferring About page: %w", err)
-	}
+	fmt.Println("URL:", homepageURL)
 
-	email, err := web.ExtractEmailFromAboutPage(aboutPageURL)
-	if err != nil {
-		return "", fmt.Errorf("error extracting email: %w", err)
-	}
+	// aboutPageURL, err := web.InferAboutPage(homepageURL)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error inferring About page: %w", err)
+	// }
 
-	return email, nil
+	// email, err := web.ExtractEmailFromAboutPage(aboutPageURL)
+	// if err != nil {
+	// 	return "", fmt.Errorf("error extracting email: %w", err)
+	// }
+
+	return homepageURL, nil
+	// return email, nil
 }
 
 func main() {
-	companyNames, err := companies.ReadCompanyNames("companies.txt")
+	_, err := companies.ReadCompanyNames("companies/companies.txt")
 	if err != nil {
 		fmt.Println("Error reading company names:", err)
 		return
 	}
 
-	for _, companyName := range companyNames {
-		// Simulate delays to prevent getting blocked by Google
-		time.Sleep(2 * time.Second)
-
-		email, err := getCompanyEmail(companyName)
-		if err != nil {
-			fmt.Println("Error:", err)
-		} else {
-			fmt.Println("Email found:", email)
-		}
-
+	companyName := "stanbic"
+	url, err := web.SearchGoogle(companyName)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Company homepage URL found:", url)
 	}
+
+	// for _, companyName := range companyNames {
+	// 	time.Sleep(2 * time.Second) // Simulate delays to prevent getting blocked by Google
+
+	// 	email, err := getCompanyEmail(companyName)
+	// 	if err != nil {
+	// 		fmt.Println("Error:", err)
+	// 	} else {
+	// 		fmt.Println("Email found:", email)
+	// 	}
+
+	// }
 
 }
