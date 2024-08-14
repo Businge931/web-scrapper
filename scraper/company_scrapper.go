@@ -61,7 +61,6 @@ func GetSearchResults(companyName string) (string, error) {
 	queryParams, _ := query.Values(params)
 	searchURL := fmt.Sprintf("%s?%s", baseURL, queryParams.Encode())
 
-
 	// Make the HTTP request to SerpAPI
 	resp, err := http.Get(searchURL)
 	if err != nil {
@@ -79,8 +78,6 @@ func GetSearchResults(companyName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to decode SerpAPI response: %w", err)
 	}
-
-	fmt.Println(serpResponse.Organic)
 
 	// Ensure that we have at least one result
 	if len(serpResponse.Organic) == 0 {
