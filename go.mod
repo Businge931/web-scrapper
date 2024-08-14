@@ -1,4 +1,4 @@
-module webscrapper
+module github.com/Businge931/company-email-scraper
 
 go 1.22.3
 
