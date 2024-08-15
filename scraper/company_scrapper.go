@@ -20,8 +20,8 @@ type SerpAPIResponse struct {
 	} `json:"organic"`
 }
 
-func ReadCompanyNames(filename string) ([]string, error) {
-	file, err := os.Open(filename)
+func ReadCompanyNames(filepath string) ([]string, error) {
+	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +92,7 @@ func GetSearchResults(companyName string) (string, error) {
 }
 
 func GetCompanyEmail(companyURL,companyName string) (string, error) {
+	//skip Facebook URLs
 	if strings.Contains(companyURL, "facebook.com") {
 		return "", fmt.Errorf("skipping Facebook URL: %s", companyURL)
 	}
