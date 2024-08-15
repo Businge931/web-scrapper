@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
-// SerpAPI response struct
+// SerpAPI response struct visit: https://serper.dev/playground
 type SerpAPIResponse struct {
 	Organic []struct {
 		Link string `json:"link"`
@@ -41,6 +41,7 @@ func ReadCompanyNames(filepath string) ([]string, error) {
 }
 
 func GetSearchResults(client *http.Client, companyName string) (string, error) {
+
 	os.Setenv("SERPAPI_KEY", "0eb5aec35da6593d1993b1573558d3b5f8b0a37c")
 	apiKey := os.Getenv("SERPAPI_KEY")
 	if apiKey == "" {
