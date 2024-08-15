@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,6 +17,9 @@ func main() {
 	}
 	output := make(map[string]string)
 
+	// Create a new http.Client
+	client := &http.Client{}
+
 	// Create the output file once
 	fileName := fmt.Sprintf("company_emails_%d.txt", time.Now().Unix())
 	file, err := os.Create(fileName)
@@ -25,7 +29,9 @@ func main() {
 	defer file.Close()
 
 	for _, companyName := range companyNames {
-		companyURL, err := scraper.GetSearchResults(companyName)
+		companyURL, err := scraper.GetSearchResults(
+			client,
+			companyName)
 		if err != nil {
 			log.Printf("Error getting search results for %s: %v", companyName, err)
 			output[companyName] = ""
@@ -33,7 +39,7 @@ func main() {
 		}
 		output[companyName] = companyURL
 
-		email, err := scraper.GetCompanyEmail(companyURL,companyName)
+		email, err := scraper.GetCompanyEmail(companyURL, companyName)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
