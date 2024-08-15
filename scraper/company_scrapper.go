@@ -40,7 +40,9 @@ func ReadCompanyNames(filepath string) ([]string, error) {
 	return companyNames, nil
 }
 
-func GetSearchResults(companyName string) (string, error) {
+func GetSearchResults(
+	client *http.Client,
+	companyName string) (string, error) {
 	os.Setenv("SERPAPI_KEY", "0eb5aec35da6593d1993b1573558d3b5f8b0a37c")
 	apiKey := os.Getenv("SERPAPI_KEY")
 	if apiKey == "" {
@@ -65,7 +67,7 @@ func GetSearchResults(companyName string) (string, error) {
 	searchURL := fmt.Sprintf("%s?%s", baseURL, queryParams.Encode())
 
 	// Make the HTTP request to SerpAPI
-	resp, err := http.Get(searchURL)
+	resp, err := client.Get(searchURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to make request to SerpAPI: %w", err)
 	}
