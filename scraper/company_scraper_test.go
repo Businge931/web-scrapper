@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -150,6 +151,62 @@ func TestGetCompanyEmail(t *testing.T) {
 			}
 			if email != tt.wantEmail {
 				t.Errorf("expected email: %s, got: %s", tt.wantEmail, email)
+			}
+		})
+	}
+}
+
+
+func TestWriteEmailsToFile(t *testing.T) {
+	tests := []struct {
+		companyName string
+		email       string
+		wantOutput  string
+	}{
+		{
+			companyName: "Test Company",
+			email:       "test@example.com",
+			wantOutput:  "Test Company : test@example.com\n",
+		},
+		{
+			companyName: "Another Company",
+			email:       "another@example.com",
+			wantOutput:  "Another Company : another@example.com\n",
+		},
+		{
+			companyName: "Empty Email",
+			email:       "",
+			wantOutput:  "Empty Email : \n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("Writing %s", tt.companyName), func(t *testing.T) {
+			// Create a temporary file
+			tmpFile, err := os.CreateTemp("", "test_emails_*.txt")
+			if err != nil {
+				t.Fatalf("failed to create temp file: %v", err)
+			}
+			defer os.Remove(tmpFile.Name())
+
+			// Call WriteEmailsToFile
+			err = WriteEmailsToFile(tmpFile, tt.companyName, tt.email)
+			if err != nil {
+				t.Fatalf("WriteEmailsToFile() error = %v", err)
+			}
+
+			// Close the file to flush the write
+			tmpFile.Close()
+
+			// Read the content of the file
+			content, err := os.ReadFile(tmpFile.Name())
+			if err != nil {
+				t.Fatalf("failed to read temp file: %v", err)
+			}
+
+			// Check if the content matches the expected output
+			if string(content) != tt.wantOutput {
+				t.Errorf("expected %q, got %q", tt.wantOutput, string(content))
 			}
 		})
 	}
