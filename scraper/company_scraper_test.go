@@ -1,6 +1,9 @@
 package scraper
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
@@ -44,6 +47,39 @@ func TestReadCompanyNames(t *testing.T) {
 	}
 }
 
+func TestGetSearchResults(t *testing.T) {
+	// Mock response data
+	mockResponse := SerpAPIResponse{
+		Organic: []struct {
+			Link string `json:"link"`
+		}{
+			{Link: "https://google.serper.dev/search"},
+		},
+	}
 
+	// Create a mock server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Encode the mock response as JSON and write it to the response writer
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer server.Close()
 
+	// Create an http.Client that directs requests to the mock server
+	client := server.Client()
 
+	// Call the function under test with the mock client
+	companyName := "stanbic bank"
+	result, err := GetSearchResults(client, companyName)
+	if err != nil {
+		t.Fatalf("GetSearchResults returned an error: %v", err)
+	}
+
+	// Expected URL from the mock response
+	expectedURL := "https://www.stanbicbank.co.ug/uganda/personal"
+
+	// Check if the result matches the expected URL
+	if result != expectedURL {
+		t.Errorf("Expected %s, but got %s", expectedURL, result)
+	}
+}
