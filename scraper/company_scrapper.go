@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/google/go-querystring/query"
 )
@@ -88,20 +90,44 @@ func GetSearchResults(companyName string) (string, error) {
 	return serpResponse.Organic[0].Link, nil
 }
 
-func WriteOutput(filename string, output map[string]string) error {
-	file, err := os.Create(filename)
+func GetCompanyEmail(companyURL string) (string, error) {
+	resp, err := http.Get(companyURL)
 	if err != nil {
-		return err
+		return "", fmt.Errorf("failed to fetch the page: %w", err)
 	}
-	defer file.Close()
+	defer resp.Body.Close()
 
-	for company, email := range output {
-		line := fmt.Sprintf("%s: %s\n", company, email)
-		_, err := file.WriteString(line)
-		if err != nil {
-			return err
-		}
+	// Check for non-OK status
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received non-OK HTTP status: %s", resp.Status)
 	}
 
+	// Read the body of the response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Convert the body to a string for easier searching
+	bodyStr := string(body)
+
+	// Regular expression to find emails
+	emailRegex := regexp.MustCompile(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`)
+	emails := emailRegex.FindAllString(bodyStr, -1)
+
+	// If no emails are found, return an error
+	if len(emails) == 0 {
+		return "", fmt.Errorf("no emails found on the page")
+	}
+
+	// Return the first email found
+	return emails[0], nil
+}
+
+func WriteEmailsToFile(file *os.File, companyName, email string) error {
+	_, err := file.WriteString(fmt.Sprintf("%s : %s\n", companyName, email))
+	if err != nil {
+		return fmt.Errorf("failed to write to file: %w", err)
+	}
 	return nil
 }
