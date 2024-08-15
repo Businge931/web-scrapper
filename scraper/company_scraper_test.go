@@ -83,3 +83,74 @@ func TestGetSearchResults(t *testing.T) {
 		t.Errorf("Expected %s, but got %s", expectedURL, result)
 	}
 }
+
+func TestGetCompanyEmail(t *testing.T) {
+	tests := []struct {
+		name         string
+		companyURL   string
+		companyName  string
+		mockResponse string
+		statusCode   int
+		wantEmail    string
+		expectError  bool
+	}{
+		{
+			name:         "Valid email found",
+			companyURL:   "/test-company",
+			companyName:  "Test Company",
+			mockResponse: `<html><body>Contact us at test@example.com</body></html>`,
+			statusCode:   http.StatusOK,
+			wantEmail:    "test@example.com",
+			expectError:  false,
+		},
+		{
+			name:         "No email found",
+			companyURL:   "/no-email-company",
+			companyName:  "No Email Company",
+			mockResponse: `<html><body>No contact information available</body></html>`,
+			statusCode:   http.StatusOK,
+			wantEmail:    "",
+			expectError:  true,
+		},
+		{
+			name:         "Facebook URL skipped",
+			companyURL:   "https://www.facebook.com/test-company",
+			companyName:  "Test Company",
+			mockResponse: "",
+			statusCode:   http.StatusOK,
+			wantEmail:    "",
+			expectError:  true,
+		},
+		{
+			name:         "Non-OK status",
+			companyURL:   "/server-error",
+			companyName:  "Server Error Company",
+			mockResponse: "",
+			statusCode:   http.StatusInternalServerError,
+			wantEmail:    "",
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock server
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				w.Write([]byte(tt.mockResponse))
+			}))
+			defer server.Close()
+
+			// Use the mock server's URL for the test
+			companyURL := server.URL + tt.companyURL
+
+			email, err := GetCompanyEmail(companyURL, tt.companyName)
+			if (err != nil) != tt.expectError {
+				t.Fatalf("expected error: %v, got: %v", tt.expectError, err)
+			}
+			if email != tt.wantEmail {
+				t.Errorf("expected email: %s, got: %s", tt.wantEmail, email)
+			}
+		})
+	}
+}
