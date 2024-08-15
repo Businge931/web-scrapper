@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	companyNames, err := scraper.ReadCompanyNames("data/input.txt")
+	companyNames, err := scraper.ReadCompanyNames("companies-list/input.txt")
 	if err != nil {
 		log.Fatalf("Error reading input file: %v", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 		}
 		output[companyName] = companyURL
 
-		email, err := scraper.GetCompanyEmail(companyURL)
+		email, err := scraper.GetCompanyEmail(companyURL,companyName)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}

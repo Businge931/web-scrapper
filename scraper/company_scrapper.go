@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 )
@@ -90,7 +91,11 @@ func GetSearchResults(companyName string) (string, error) {
 	return serpResponse.Organic[0].Link, nil
 }
 
-func GetCompanyEmail(companyURL string) (string, error) {
+func GetCompanyEmail(companyURL,companyName string) (string, error) {
+	if strings.Contains(companyURL, "facebook.com") {
+		return "", fmt.Errorf("skipping Facebook URL: %s", companyURL)
+	}
+
 	resp, err := http.Get(companyURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch the page: %w", err)
@@ -117,7 +122,7 @@ func GetCompanyEmail(companyURL string) (string, error) {
 
 	// If no emails are found, return an error
 	if len(emails) == 0 {
-		return "", fmt.Errorf("no emails found on the page")
+		return "", fmt.Errorf("no email found on the page: %s",companyName)
 	}
 
 	// Return the first email found
