@@ -14,7 +14,7 @@ This Go program reads a list of company names from a text file, performs a Googl
 1. Clone the repository:
     ```bash
     git clone https://github.com/Businge931/web-scrapper.git
-    cd company-email-scraper
+    cd web-scraper
     ```
 
 2. Install dependencies:
